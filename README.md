@@ -20,7 +20,9 @@ Run
 Before you run the below script from project root, replace <docker image> with 
 the image id created in the prerequisites and <username>, <password> with 
 correct credentials
-`node just-run-ras.js --basic-auth-username=<username> --basic-auth-password=<password> --port=8082 --service-suffix=-concourse-latest.apps.devtest.onsclofo.uk --docker-image=<docker-image> --run-with=docker`
+```
+node just-run-ras.js --basic-auth-username=<username> --basic-auth-password=<password> --port=8082 --service-suffix=-concourse-latest.apps.devtest.onsclofo.uk --docker-image=<docker-image> --run-with=docker
+```
 
 
 
@@ -31,7 +33,7 @@ Prerequisites
 -------------
 From project root
 * Install Node (v8^)
-* Install [Docker](https://www.docker.com/) optionally with brew `brew install docker`
+* Install [Docker](https://www.docker.com/) optionally with brew ```brew install docker```
 * Install pyenv `brew install pyenv`
 * Install python 3.6.1 `pyenv install 3.6.1`
 * Set pyenv global python version `pyenv global 3.6.1`
@@ -40,9 +42,13 @@ From project root
 Install/Setup a new environment
 --------------
 Before you run the below script from project root replace <username>, <password> and <python path> with correct credentials and path and adjust any settings to your needs
-`node just-run-ras.js --basic-auth-username=<username> --basic-auth-password=<password> --port=8082 --service-suffix=-concourse-latest.apps.devtest.onsclofo.uk --python-path=<python path> —-install`
+```
+node just-run-ras.js --basic-auth-username=<username> --basic-auth-password=<password> --port=8082 --service-suffix=-concourse-latest.apps.devtest.onsclofo.uk --python-path=<python path> —-install
+```
 
 Run existing environment
 ------------------------
 If you've previously installed and setup an environment, just run again with
-`node just-run-ras.js`
+```
+node just-run-ras.js
+```
