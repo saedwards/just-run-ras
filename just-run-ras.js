@@ -83,7 +83,7 @@ console.log('argMap: ', argMap);
 const pipEnvInstallCommand = 'pipenv install --python=' + argMap["python-path"];
 
 const pipEnvInstall = () => {
-  exec(pipEnvInstallCommand, (err, stdout, stderr) => {
+  exec(pipEnvInstallCommand, {maxBuffer: 1024 * 500}, (err, stdout, stderr) => {
     if (err) {
       console.error(err);
       return;
@@ -109,7 +109,7 @@ const pipRASCommand =
   'pipenv run python run.py';
 
 const pipRAS = () => {
-  exec(pipRASCommand, (err, stdout, stderr) => {
+  exec(pipRASCommand, {maxBuffer: 1024 * 500}, (err, stdout, stderr) => {
     if (err) {
       console.error(err);
       return;
@@ -143,7 +143,7 @@ function routeFromArgs() {
  * Init
  */
 function init() {
-  exec(`docker inspect redis`, (err, stdout, stderr) => {
+  exec(`docker inspect redis`, {maxBuffer: 1024 * 500}, (err, stdout, stderr) => {
     const state = JSON.parse(stdout)[0] && JSON.parse(stdout)[0].State;
 
     if(err || stderr) {
