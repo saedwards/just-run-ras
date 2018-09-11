@@ -67,7 +67,8 @@ const argMap = {
   'docker-image': null,
   'python-path': null,
   'install': null,
-  'run-with': null
+  'run-with': null,
+  'jwt': null
 };
 
 process.argv.forEach((arg) => {
@@ -105,6 +106,7 @@ const pipRASCommand =
     return k + '=' + argMap["basic-auth-password"];
   }).join(' ') + ' ' +
 
+  'JWT_SECRET=' + argMap.jwt + ' ' +
   'ACCOUNT_SERVICE_URL=https://surveys.ons.gov.uk/surveys/todo ' +
   'pipenv run python run.py';
 
@@ -122,8 +124,8 @@ const pipRAS = () => {
 const dockerRedis = (opts = {}) => {
   const command = opts.run
     ? 'docker run --name redis ' +
-      (argMap['run-with'] === 'docker' ? '-p 7379:6379 ' : '-p 6379:6379 ') +
-      '-d redis'
+    (argMap['run-with'] === 'docker' ? '-p 7379:6379 ' : '-p 6379:6379 ') +
+    '-d redis'
     : 'docker start redis';
 
   return execPromise(command);
