@@ -3,7 +3,7 @@ Just run RAS
 A lightweight script to use with Node that will run ONLY the 
 [ONS RAS frontstage project](https://github.com/ONSdigital/ras-frontstage) service, which uses services 
 running on the network to remove memory hogging services, minimise setup time 
-involved in borrowing a more capable maching and speed up development builds.
+involved in borrowing a more capable machine and speed up development builds.
 
 
 
@@ -17,8 +17,8 @@ From the project root
 
 Run
 ---
-Before you run the below script from project root, replace <docker image> with 
-the image id created in the prerequisites and <username>, <password> with 
+Before you run the below script from project root, replace `<docker image>` with 
+the image id created in the prerequisites and `<username>`, `<password>` with 
 correct credentials
 ```
 node just-run-ras.js --basic-auth-username=<username> --basic-auth-password=<password> --port=8082 --service-suffix=-concourse-latest.apps.devtest.onsclofo.uk --docker-image=<docker-image> --run-with=docker
@@ -41,7 +41,7 @@ From project root
 
 Install/Setup a new environment
 --------------
-Before you run the below script from project root replace <username>, <password> and <python path> with correct credentials and path and adjust any settings to your needs
+Before you run the below script from project root replace `<username>`, `<password>` and `<python path>` with correct credentials and path and adjust any settings to your needs
 ```
 node just-run-ras.js --basic-auth-username=<username> --basic-auth-password=<password> --port=8082 --service-suffix=-concourse-latest.apps.devtest.onsclofo.uk --python-path=<python path> —-install
 ```
