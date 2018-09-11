@@ -81,46 +81,10 @@ process.argv.forEach((arg) => {
 
 console.log('argMap: ', argMap);
 
-const pipEnvInstallCommand = 'pipenv install --python=' + argMap["python-path"];
 
-const pipEnvInstall = () => {
-  exec(pipEnvInstallCommand, {maxBuffer: 1024 * 500}, (err, stdout, stderr) => {
-    if (err) {
-      console.error(err);
-      return;
-    }
-
-    console.log(stdout);
-    pipRAS();
-  }).stdout.pipe(process.stdout);
-};
-
-const pipRASCommand =
-  serviceDetails.map((details) => {
-    return details['url-key'] + '=https://' + details['service-name'] + argMap['service-suffix'];
-  }).join(' ') + ' ' +
-  basicAuthUsernameKeys.map((k) => {
-    return k + '=' + argMap["basic-auth-username"];
-  }).join(' ') + ' ' +
-  basicAuthPwKeys.map((k) => {
-    return k + '=' + argMap["basic-auth-password"];
-  }).join(' ') + ' ' +
-
-  'JWT_SECRET=' + argMap.jwt + ' ' +
-  'ACCOUNT_SERVICE_URL=https://surveys.ons.gov.uk/surveys/todo ' +
-  'pipenv run python run.py';
-
-const pipRAS = () => {
-  exec(pipRASCommand, {maxBuffer: 1024 * 500}, (err, stdout, stderr) => {
-    if (err) {
-      console.error(err);
-      return;
-    }
-
-    console.log(stdout);
-  }).stdout.pipe(process.stdout);
-}
-
+/**
+ * Prerequisites
+ */
 const dockerRedis = (opts = {}) => {
   const command = opts.run
     ? 'docker run --name redis ' +
@@ -129,84 +93,138 @@ const dockerRedis = (opts = {}) => {
     : 'docker start redis';
 
   return execPromise(command);
+};
+
+
+/**
+ * Run for development
+ */
+function dev() {
+  console.log('Running with pipenv');
+
+  const pipEnvInstallCommand = 'pipenv install --python=' + argMap["python-path"];
+
+  const pipEnvInstall = () => {
+    exec(pipEnvInstallCommand, {maxBuffer: 1024 * 500}, (err, stdout, stderr) => {
+      if (err) {
+        console.error(err);
+        return;
+      }
+
+      console.log(stdout);
+      pipRAS();
+    }).stdout.pipe(process.stdout);
+  };
+
+  const pipRASCommand =
+    serviceDetails.map((details) => {
+      return details['url-key'] + '=https://' + details['service-name'] + argMap['service-suffix'];
+    }).join(' ') + ' ' +
+    basicAuthUsernameKeys.map((k) => {
+      return k + '=' + argMap["basic-auth-username"];
+    }).join(' ') + ' ' +
+    basicAuthPwKeys.map((k) => {
+      return k + '=' + argMap["basic-auth-password"];
+    }).join(' ') + ' ' +
+
+    'JWT_SECRET=' + argMap.jwt + ' ' +
+    'ACCOUNT_SERVICE_URL=https://surveys.ons.gov.uk/surveys/todo ' +
+    'pipenv run python run.py';
+
+  const pipRAS = () => {
+    exec(pipRASCommand, {maxBuffer: 1024 * 500}, (err, stdout, stderr) => {
+      if (err) {
+        console.error(err);
+        return;
+      }
+
+      console.log(stdout);
+    }).stdout.pipe(process.stdout);
+  }
+
+  function routeFromArgs() {
+    if (argMap.install) {
+      pipEnvInstall();
+    }
+    else {
+      pipRAS();
+    }
+  }
+
+  routeFromArgs();
 }
 
-function routeFromArgs() {
-  if (argMap.install) {
-    pipEnvInstall();
-  }
-  else {
-    pipRAS();
-  }
+
+/**
+ * Run with docker
+ */
+function docker() {
+  console.log('Running with Docker');
+
+  const dockerRASCommand = 'docker run -d -p ' + argMap.port + ':' + argMap.port + ' --link redis:redis ' +
+    serviceDetails.map((details) => {
+      return '-e ' + details['url-key'] + '=https://' + details['service-name'] + argMap['service-suffix'];
+    }).join(' ') + ' ' +
+    basicAuthUsernameKeys.map((k) => {
+      return '-e ' + k + '=' + argMap["basic-auth-username"];
+    }).join(' ') + ' ' +
+    basicAuthPwKeys.map((k) => {
+      return '-e ' + k + '=' + argMap["basic-auth-password"];
+    }).join(' ') + ' ' +
+
+    '-e JWT_SECRET=' + argMap.jwt + ' ' +
+    '-e REDIS_HOST=redis -e REDIS_PORT=6379 -e REDIS_DB=3 ' +
+    '-e ACCOUNT_SERVICE_URL=https://surveys.ons.gov.uk/surveys/todo ' +
+    argMap['docker-image'];
+
+  const dockerRAS = () => {
+    exec(dockerRASCommand, (err, stdout, stderr) => {
+      if (err) {
+        console.error(err);
+        return;
+      }
+
+      console.log(stdout);
+    });
+  };
+
+  dockerRAS();
 }
+
 
 
 /**
  * Init
  */
 function init() {
-  exec(`docker inspect redis`, {maxBuffer: 1024 * 500}, (err, stdout, stderr) => {
-    const state = JSON.parse(stdout)[0] && JSON.parse(stdout)[0].State;
+  return new Promise((resolve, reject) => {
+    exec(`docker inspect redis`, {maxBuffer: 1024 * 500}, (err, stdout, stderr) => {
+      const state = JSON.parse(stdout)[0] && JSON.parse(stdout)[0].State;
 
-    if(err || stderr) {
-      console.log(err, stderr);
-      return;
-    }
+      if(err || stderr) {
+        console.log(err, stderr);
+        reject();
+        return;
+      }
 
-    if (state) {
-      console.log('Container with named state redis exists');
+      if (state) {
+        console.log('Container with named state redis exists');
 
-      if(!state.Running) {
-        console.log('Run existing redis container');
-        dockerRedis().then(() => routeFromArgs());
+        if(!state.Running) {
+          console.log('Run existing redis container');
+          dockerRedis().then(() => resolve());
+        }
+        else {
+          resolve();
+        }
       }
       else {
-        routeFromArgs();
+        console.log('Container with named state redis does not exist');
+        dockerRedis({run: true}).then(() => resolve());
       }
-    }
-    else {
-      console.log('Container with named state redis does not exist');
-      dockerRedis({run: true}).then(() => routeFromArgs());
-    }
-    //console.log(stdout);
+      //console.log(stdout);
+    });
   });
 }
 
-init();
-
-
-
-
-
-
-/*const dockerRedis = exec('docker run --name redis -p 7379:6379 -d redis', () => {
- //dockerRAS();
-});*/
-
-/*
-const dockerRASCommand = 'docker run -d -p ' + argMap.port + ':' + argMap.port + ' --link redis:redis ' +
-  serviceDetails.map((details) => {
-    return '-e ' + details['url-key'] + '=https://' + details['service-name'] + argMap['service-suffix'];
-  }).join(' ') + ' ' +
-  basicAuthUsernameKeys.map((k) => {
-    return '-e ' + k + '=' + argMap["basic-auth-username"];
-  }).join(' ') + ' ' +
-  basicAuthPwKeys.map((k) => {
-    return '-e ' + k + '=' + argMap["basic-auth-password"];
-  }).join(' ') + ' ' +
-  '-e REDIS_HOST=redis -e REDIS_PORT=6379 -e REDIS_DB=3 ' +
-  '-e ACCOUNT_SERVICE_URL=https://surveys.ons.gov.uk/surveys/todo ' +
-  argMap['docker-image'];
-
-const dockerRAS = () => {
-  exec(dockerRASCommand, (err, stdout, stderr) => {
-    if (err) {
-      console.error(err);
-      return;
-    }
-
-    console.log(stdout);
-  });
-};
-*/
-
+init().then(argMap['run-with'] === 'docker' ? docker() : dev());
