@@ -34,6 +34,17 @@ const serviceDetails = [
   {
     'url-key': 'SURVEY_URL',
     'service-name': 'rm-survey-service'
+  },
+
+
+
+  {
+    'url-key': 'UAA_SERVICE_URL',
+    'service-name': 'uaa'
+  },
+  {
+    'url-key': 'SAMPLE_URL',
+    'service-name': 'rm-sample-service'
   }
 ];
 
@@ -127,7 +138,13 @@ function dev() {
       return k + '=' + argMap["basic-auth-password"];
     }).join(' ') + ' ' +
 
+    /**
+     * Both are the same but have different environment variables in different
+     * applications
+     */
     'JWT_SECRET=' + argMap.jwt + ' ' +
+    'RAS_SECURE_MESSAGING_JWT_SECRET=' + argMap.jwt + ' ' +
+
     'ACCOUNT_SERVICE_URL=https://surveys.ons.gov.uk/surveys/todo ' +
     'pipenv run python run.py';
 
@@ -203,7 +220,7 @@ function init() {
 
       if(err || stderr) {
         console.log(err, stderr);
-        reject();
+        dockerRedis({run: true}).then(() => resolve());
         return;
       }
 
